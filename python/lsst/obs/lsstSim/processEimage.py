@@ -46,12 +46,6 @@ class ProcessEimageTask(ProcessCcdTask):
     ConfigClass = ProcessEimageConfig
     _DefaultName = "processEimage"
 
-    def __init__(self, **kwargs):
-        """Construct a ProcessEimageTask
-        """
-        ProcessCcdTask.__init__(self, **kwargs)
-        numpy.random.seed(self.config.rngSeed)
-
     @classmethod
     def _makeArgumentParser(cls):
         """Create an argument parser
