@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-# 
+#
 # LSST Data Management System
 # Copyright 2008, 2009, 2010 LSST Corporation.
-# 
+#
 # This product includes software developed by the
 # LSST Project (http://www.lsst.org/).
 #
@@ -11,14 +11,14 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+#
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 import os.path
@@ -26,6 +26,7 @@ import unittest
 
 import lsst.utils.tests as utilsTests
 import lsst.daf.persistence as dafPersist
+
 
 class ValidateTestCase(unittest.TestCase):
     """Testing butler id validation"""
@@ -39,22 +40,23 @@ class ValidateTestCase(unittest.TestCase):
     def testValidate(self):
         """Test validation of ids"""
         raw = self.butler.get("bias", visit=85471048, snap=0, raft='0,3',
-                sensor='0,1', channel='1,0')
+                              sensor='0,1', channel='1,0')
         self.assertEqual(raw.getWidth(), 513)
         self.assertEqual(raw.getHeight(), 2001)
         self.assertRaises(RuntimeError, self.butler.get,
-                "bias", visit=85471048, snap=0, raft="03")
+                          "bias", visit=85471048, snap=0, raft="03")
         self.assertRaises(RuntimeError, self.butler.get,
-                "bias", visit=85471048, snap=0, raft="0,3", sensor="01")
+                          "bias", visit=85471048, snap=0, raft="0,3", sensor="01")
         self.assertRaises(RuntimeError, self.butler.get,
-                "bias", visit=85471048, snap=0, raft="0,3",
-                sensor="0,1", channel="10")
+                          "bias", visit=85471048, snap=0, raft="0,3",
+                          sensor="0,1", channel="10")
         self.assertRaises(RuntimeError, self.butler.subset,
-                "bias", visit=85471048, snap=0, raft="03")
+                          "bias", visit=85471048, snap=0, raft="03")
         self.assertRaises(RuntimeError, self.butler.subset,
-                "bias", visit=85471048, snap=0, raft=True)
+                          "bias", visit=85471048, snap=0, raft=True)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
 def suite():
     """Returns a suite containing all the test cases in this module."""
@@ -65,6 +67,7 @@ def suite():
     suites += unittest.makeSuite(ValidateTestCase)
     suites += unittest.makeSuite(utilsTests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit = False):
     """Run the tests"""

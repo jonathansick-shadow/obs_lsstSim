@@ -17,8 +17,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
@@ -43,12 +43,15 @@ from lsst.obs.lsstSim.selectFluxMag0 import SelectLsstSimFluxMag0Task
 class WrapDataId():
     """A container for dataId that looks like dataRef to computeImageScaler()
     """
+
     def __init__(self, dataId):
         self.dataId = dataId
+
 
 class ScaleLsstSimZeroPointTaskTestCase(unittest.TestCase):
     """A test case for ScaleLsstSimZeroPointTask
     """
+
     def makeTestExposure(self, xNumPix, yNumPix):
         """
         Create and return an exposure that is completely covered by the database: test_select_lsst_images
@@ -69,7 +72,7 @@ class ScaleLsstSimZeroPointTaskTestCase(unittest.TestCase):
         metadata.setDouble("CD2_1", 0.0000000000000)
         metadata.set("CUNIT1", "deg")
         metadata.set("CUNIT2", "deg")
-        #exposure needs a wcs and a bbox
+        # exposure needs a wcs and a bbox
         wcs = afwImage.makeWcs(metadata)
         bbox = afwGeom.Box2I(afwGeom.Point2I(327750, 235750), afwGeom.Extent2I(xNumPix, yNumPix))
         exposure = afwImage.ExposureF(bbox, wcs)
@@ -89,7 +92,6 @@ class ScaleLsstSimZeroPointTaskTestCase(unittest.TestCase):
         fmInfoList = fmInfoStruct.fluxMagInfoList
         self.assertEqual(sum([1 for fmInfo in fmInfoList if fmInfo.dataId['visit'] == visit]),
                          len(fmInfoList))
-
 
     def testScaleZeroPoint(self):
         """Test integration of pipe.tasks.scaleZeroPoint and obs.lsstSim.selectFluxMag0"""
@@ -117,16 +119,16 @@ class ScaleLsstSimZeroPointTaskTestCase(unittest.TestCase):
         outCalib = zpScaler.getCalib()
         self.assertAlmostEqual(outCalib.getMagnitude(1.0), ZEROPOINT)
 
-        exposure = self.makeTestExposure(10,10)
-        #create dataId for exposure. Visit is only field needed. Others ignored.
+        exposure = self.makeTestExposure(10, 10)
+        # create dataId for exposure. Visit is only field needed. Others ignored.
         exposureId = {'ignore_fake_key': 1234, 'visit': 882820621}
 
-        #API for computImageScale() takes a dataRef not a dataId.
+        # API for computImageScale() takes a dataRef not a dataId.
         exposureFakeDataRef = WrapDataId(exposureId)
-        #test methods: computeImageScale(), scaleMaskedImage(), getInterpImage()
-        imageScaler = zpScaler.computeImageScaler(exposure,exposureFakeDataRef)
+        # test methods: computeImageScale(), scaleMaskedImage(), getInterpImage()
+        imageScaler = zpScaler.computeImageScaler(exposure, exposureFakeDataRef)
         scaleFactorIm = imageScaler.getInterpImage(exposure.getBBox())
-        predScale = numpy.mean(imageScaler._scaleList) #0.011125492863357
+        predScale = numpy.mean(imageScaler._scaleList)  # 0.011125492863357
 
         self.assertAlmostEqual(afwMath.makeStatistics(scaleFactorIm, afwMath.VARIANCE, self.sctrl).getValue(),
                                0.0)
@@ -135,12 +137,11 @@ class ScaleLsstSimZeroPointTaskTestCase(unittest.TestCase):
 
         mi = exposure.getMaskedImage()
         imageScaler.scaleMaskedImage(mi)
-        self.assertAlmostEqual(mi.get(1,1)[0], predScale) #check image plane scaled
-        self.assertAlmostEqual(mi.get(1,1)[2], predScale**2) #check variance plane scaled
+        self.assertAlmostEqual(mi.get(1, 1)[0], predScale)  # check image plane scaled
+        self.assertAlmostEqual(mi.get(1, 1)[2], predScale**2)  # check variance plane scaled
 
         exposure.setCalib(zpScaler.getCalib())
         self.assertAlmostEqual(exposure.getCalib().getFlux(ZEROPOINT), 1.0)
-
 
     def makeCalib(self, zeroPoint):
         calib = afwImage.Calib()

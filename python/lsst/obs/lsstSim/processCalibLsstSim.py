@@ -33,15 +33,16 @@ import numpy
 
 __all__ = ["ProcessCalibLsstSimTask"]
 
+
 class ProcessCalibLsstSimConfig(IsrTask.ConfigClass):
     """Config for ProcessCcdLsstSim"""
     sigmaClip = pexConfig.Field(dtype=float, default=3., doc="Sigma level for sigma clipping")
     clipIter = pexConfig.Field(dtype=int, default=5, doc="Number of iterations for sigma clipping")
-    type = pexConfig.ChoiceField(dtype=str, default='bias', doc="Type of master calibration to produce", allowed={'bias':"make master bias(zero)", 'dark':"make master dark", 'flat':"make master flat"})
+    type = pexConfig.ChoiceField(dtype=str, default='bias', doc="Type of master calibration to produce", allowed={
+                                 'bias': "make master bias(zero)", 'dark': "make master dark", 'flat': "make master flat"})
 
     def __init__(self, *args, **kwargs):
         pexConfig.Config.__init__(self, *args, **kwargs)
-
 
 
 class ProcessCalibLsstSimTask(IsrTask):
@@ -49,19 +50,18 @@ class ProcessCalibLsstSimTask(IsrTask):
 
     def __init__(self, **kwargs):
         IsrTask.__init__(self, **kwargs)
-        self.transposeForInterpolation = True # temporary hack until LSST data is in proper order
+        self.transposeForInterpolation = True  # temporary hack until LSST data is in proper order
         self.statsCtrl = afwMath.StatisticsControl()
         self.statsCtrl.setNumSigmaClip(self.config.sigmaClip)
         self.statsCtrl.setNumIter(self.config.clipIter)
-        #Not sure how to do this.
-        #self.statsCtrl.setAndMask('BAD')
+        # Not sure how to do this.
+        # self.statsCtrl.setAndMask('BAD')
         self.isr = isr
-
 
     @pipeBase.timeMethod
     def run(self, sensorRefList, calibType):
         """Process a calibration frame.
-        
+
         @param sensorRef: sensor-level butler data reference
         @return pipe_base Struct containing these fields:
         - masterExpList: amp exposures of master calibration products
@@ -82,7 +82,7 @@ class ProcessCalibLsstSimTask(IsrTask):
                 ampSnapMIList = afwImage.vectorMaskedImageF()
                 dataId = eval(amp.dataId.__repr__())
                 dataId['visit'] = sRef.dataId['visit']
-                for snap in (0,1):
+                for snap in (0, 1):
                     dataId['snap'] = snap
                     ampExposure = sRef.butlerSubset.butler.get('raw', dataId)
                     if expmeta is None:
@@ -93,21 +93,21 @@ class ProcessCalibLsstSimTask(IsrTask):
 
                     ampExposure = self.convertIntToFloat(ampExposure)
                     ampExpDataView = ampExposure.Factory(ampExposure, ampDetector.getDiskDataSec())
-                
+
                     self.saturationDetection(ampExposure, ampDetector)
-    
+
                     self.overscanCorrection(ampExposure, ampDetector)
                     if calibType in ('flat', 'dark'):
                         self.biasCorrection(ampExpDataView, amp)
-                
+
                     if False:
                         self.darkCorrection(ampExpDataView, amp)
-                
+
                     self.updateVariance(ampExpDataView, ampDetector)
                     ampSnapMIList.append(ampExpDataView.getMaskedImage())
                 ampMIList.append(self.combineMIList(ampSnapMIList))
-            masterFrame = self.combineMIList(ampMIList) 
-            #Fix saturation too???
+            masterFrame = self.combineMIList(ampMIList)
+            # Fix saturation too???
             self.fixDefectsAndSat(masterFrame, ampDetector)
             exp = afwImage.ExposureF(masterFrame)
             self.copyMetadata(exp, expmeta, calibType)
@@ -133,13 +133,14 @@ class ProcessCalibLsstSimTask(IsrTask):
     def normChipAmps(self, exposureList):
         means = []
         for exp in exposureList:
-            means.append(afwMath.makeStatistics(exp.getMaskedImage(), afwMath.MEANCLIP, self.statsCtrl).getValue())
+            means.append(afwMath.makeStatistics(exp.getMaskedImage(),
+                                                afwMath.MEANCLIP, self.statsCtrl).getValue())
         means = numpy.asarray(means)
         mean = means.mean()
         for exp in exposureList:
             mi = exp.getMaskedImage()
             mi /= mean
-       
+
     def copyMetadata(self, exposure, metadata, calibType):
         outmetadata = exposure.getMetadata()
         cardsToCopy = ['CREATOR', 'VERSION', 'BRANCH', 'DATE', 'CCDID']
@@ -150,21 +151,22 @@ class ProcessCalibLsstSimTask(IsrTask):
     def fixDefectsAndSat(self, masterFrame, detector):
         fwhm = self.config.fwhm
         dataBbox = detector.getDataSec(True)
-        #Reversing the x and y is essentially a hack since we have to apply the defects in Amp coordinates and they are recorded in chip coordinates
-        #This should go away when the data from imSim is all in chip coordinates
+        # Reversing the x and y is essentially a hack since we have to apply the defects in Amp coordinates and they are recorded in chip coordinates
+        # This should go away when the data from imSim is all in chip coordinates
         y = dataBbox.getMinX()
         x = dataBbox.getMinY()
         height = dataBbox.getDimensions()[0]
-        #Should when at detector level, there will not be the need to go through the step of getting the parent
-        defectList = cameraGeom.cast_Ccd(detector.getParent()).getDefects() 
+        # Should when at detector level, there will not be the need to go through
+        # the step of getting the parent
+        defectList = cameraGeom.cast_Ccd(detector.getParent()).getDefects()
         dl = self.transposeDefectList(defectList, dataBbox)
         for d in dl:
             d.shift(-x, -y)
-            if detector.getId()>8:
+            if detector.getId() > 8:
                 d.shift(0, height - 2*d.getBBox().getMinY()-d.getBBox().getHeight())
-        #Should saturation be interpolated as well?
+        # Should saturation be interpolated as well?
         #sdl = self.isr.getDefectListFromMask(masterFrame, 'SAT', growFootprints=0)
-        #for d in sdl:
+        # for d in sdl:
         #    dl.push_back(d)
         self.isr.maskPixelsFromDefectList(masterFrame, dl, maskName='BAD')
         self.isr.interpolateDefectList(masterFrame, dl, fwhm)
@@ -175,9 +177,9 @@ class ProcessCalibLsstSimTask(IsrTask):
         for defect in defectList:
             bbox = defect.getBBox()
             nbbox = afwGeom.Box2I(afwGeom.Point2I(bbox.getMinY(), bbox.getMinX()),
-                 afwGeom.Extent2I(bbox.getDimensions()[1], bbox.getDimensions()[0]))
+                                  afwGeom.Extent2I(bbox.getDimensions()[1], bbox.getDimensions()[0]))
             if checkBbox:
-                
+
                 if checkBbox.overlaps(bbox):
                     retDefectList.push_back(measAlg.Defect(nbbox))
                 else:
@@ -185,20 +187,19 @@ class ProcessCalibLsstSimTask(IsrTask):
             else:
                 retDefectList.push_back(measAlg.Defect(nbbox))
         return retDefectList
-        
-                
-    def combineMIList(self, miList, method='MEANCLIP'):
-       combinedFrame = miList[0].Factory()
-       try:
-           if method is 'MEANCLIP':
-               combinedFrame = afwMath.statisticsStack(
-                   miList, afwMath.MEANCLIP, self.statsCtrl)
-           elif method is 'MEDIAN':
-               combinedFrame = afwMath.statisticsStack(
-                   miList, afwMath.MEDIAN, self.statsCtrl)
-           else:
-               raise ValueError("Method %s is not supported for combining frames"%(method))
-       except Exception, e:
-           self.log.log(self.log.WARN, "Could not combine the frames. %s"%(e,))
 
-       return combinedFrame
+    def combineMIList(self, miList, method='MEANCLIP'):
+        combinedFrame = miList[0].Factory()
+        try:
+            if method is 'MEANCLIP':
+                combinedFrame = afwMath.statisticsStack(
+                    miList, afwMath.MEANCLIP, self.statsCtrl)
+            elif method is 'MEDIAN':
+                combinedFrame = afwMath.statisticsStack(
+                    miList, afwMath.MEDIAN, self.statsCtrl)
+            else:
+                raise ValueError("Method %s is not supported for combining frames"%(method))
+        except Exception, e:
+            self.log.log(self.log.WARN, "Could not combine the frames. %s"%(e,))
+
+        return combinedFrame

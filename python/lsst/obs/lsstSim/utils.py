@@ -4,6 +4,7 @@ from .lsstSimMapper import LsstSimMapper
 
 __ALL__ = ['loadCamera']
 
+
 def loadCamera(repoDir):
     """Load a camera given the path to the repository (the directory that contains the 
     description directory).  I use this just in testing from the interpreter prompt.

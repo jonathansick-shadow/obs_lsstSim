@@ -17,8 +17,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and 
-# the GNU General Public License along with this program.  If not, 
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
@@ -31,6 +31,7 @@ import lsst.daf.persistence as dafPersist
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+
 class LsstSimIsrTaskTestCase(unittest.TestCase):
     """A test case for LsstSimIsrTask
     """
@@ -40,6 +41,7 @@ class LsstSimIsrTaskTestCase(unittest.TestCase):
         self.ampRef = self.butler.dataRef("raw", level=None,
                                           dataId=dict(visit=85471048, snap=0, raft='0,3',
                                                       sensor='0,1', channel='1,0'))
+
     def tearDown(self):
         del self.butler
         del self.ampRef
@@ -80,6 +82,7 @@ class LsstSimIsrTaskTestCase(unittest.TestCase):
         self.assertAlmostEqual(ampExp.getDimensions()[1], postIsrExp.getDimensions()[1])
         self.assertAlmostEqual(afwMath.makeStatistics(postIsrExp.getMaskedImage(), afwMath.MEAN).getValue(),
                                2.855780, places = 3)
+
 
 def suite():
     """Return a suite containing all the test cases in this module.

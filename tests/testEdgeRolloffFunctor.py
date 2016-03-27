@@ -29,11 +29,13 @@ import lsst.utils.tests
 import lsst.obs.lsstSim as obs_lsstSim
 import lsst.pex.exceptions as pexExcept
 
+
 def num_deriv(func, x, eps=1e-7):
     h = eps*max(abs(x), 1)
     xp = x + h
     dx = xp - x
     return (func(x + dx) - func(x))/dx
+
 
 class EdgeRolloffFunctorTestCase(unittest.TestCase):
 
@@ -68,13 +70,14 @@ class EdgeRolloffFunctorTestCase(unittest.TestCase):
         tol = 1e-5
         for func in self.funcs:
             # Check bad maxiter value.
-            self.assertRaises(pexExcept.OutOfRangeError, func.inverse, self.y0, tol, 0);
+            self.assertRaises(pexExcept.OutOfRangeError, func.inverse, self.y0, tol, 0)
 
     def testInverseMaxiterRuntimeError(self):
         for func in self.funcs:
             # Check for exceeding maximum iterations.
             self.assertRaises(pexExcept.RuntimeError, func.inverse, self.y0, 1e-10, 1)
-    
+
+
 def suite():
     """Return a suite containing all of the test cases in this module."""
     lsst.utils.tests.init()
@@ -82,6 +85,7 @@ def suite():
     suites += unittest.makeSuite(EdgeRolloffFunctorTestCase)
     suites += unittest.makeSuite(lsst.utils.tests.MemoryTestCase)
     return unittest.TestSuite(suites)
+
 
 def run(shouldExit=False):
     lsst.utils.tests.run(suite(), shouldExit)
